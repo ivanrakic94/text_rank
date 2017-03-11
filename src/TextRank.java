@@ -9,12 +9,12 @@ import edu.stanford.nlp.simple.Document;
 import edu.stanford.nlp.simple.Sentence;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedGraph;
-import edu.uci.ics.jung.graph.UndirectedSparseMultigraph;
+import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 
 
 public class TextRank {
 	
-	static UndirectedGraph<Node, Edge> graph = new UndirectedSparseMultigraph<Node, Edge>();
+	static UndirectedGraph<Node, Edge> graph = new UndirectedSparseGraph<Node, Edge>();
 	public static final double d = 0.85;
 
 	public static void main(String[] args) {
@@ -33,35 +33,46 @@ public class TextRank {
 			
 			List<String> keywords = extractKeywords(vertices);
 			
-			mergeKeywords(keywords, words);
+			List<String> mergedKeywords = mergeKeywords(keywords, words);
 			
-			displayKeywords(keywords);
+			removeMergedKeywords(keywords, mergedKeywords);
+			
+			displayKeywords(keywords, mergedKeywords);
 			
 	}
 	
-	private static void displayKeywords(List<String> keywords) {
+	private static void removeMergedKeywords(List<String> keywords, List<String> mergedKeywords) {
+		for (String s : mergedKeywords) {
+			String[] words = s.split(" ");
+			keywords.remove(words[0]);
+			keywords.remove(words[1]);
+		}
+	}
+
+	private static void displayKeywords(List<String> keywords, List<String> mergedKeywords) {
 		System.out.println("Keywords for given text:");
+		for (String s : mergedKeywords) {
+			System.out.println(s);
+		}
 		for (String s : keywords) {
 			System.out.println(s);
 		}
 		
 	}
 
-	private static void mergeKeywords(List<String> keywords, List<String> words) {
-		for (int i = 0; i < words.size(); i++) {
-			if (keywords.contains(words.get(i)) && (i + 1) < words.size()) {
-				if (keywords.contains(words.get(i + 1))) {
-					keywords.add(words.get(i) + " " + words.get(i + 1));
-					//keywords.remove(words.get(i));
-					//keywords.remove(words.get(i + 1));
-				}
+	private static List<String> mergeKeywords(List<String> keywords, List<String> words) {
+		List<String> mergedKeywords = new ArrayList<String>();
+		for (int i = 0; i < words.size() - 1; i++) {
+			if (keywords.contains(words.get(i)) && keywords.contains(words.get(i + 1)) && !mergedKeywords.contains(words.get(i) + " " + words.get(i + 1))) {
+					mergedKeywords.add(words.get(i) + " " + words.get(i + 1));
 			}
 		}
+		return mergedKeywords;
 		
 	}
 
 	private static List<String> extractKeywords(Node[] vertices) {
-		int numKeyWords = graph.getVertexCount() / 3;
+		int numKeyWords = Math.min(15, graph.getVertexCount() / 3);
 		List<String> keywords = new ArrayList<String>();
 		for (int i = 0; i < numKeyWords; i++) {
 			keywords.add(vertices[i].getValue());
@@ -95,15 +106,17 @@ public class TextRank {
 	}
 
 	private static void connectVertices(List<String> words) {
-		for (Node v : graph.getVertices()) {
-			for (int i = 0; i < words.size(); i++) {
-				if (words.get(i).equals(v.getValue()) && (i + 1) < words.size()) {
-					String next = words.get(i + 1);
-					for (Node n : graph.getVertices()) {
-						if (next.equals(n.getValue()) && graph.findEdge(v, n) == null) {
-							graph.addEdge(new Edge(1), v, n);
-						}
-					}
+		for (int i = 0; i < words.size()-1; i++) {
+			String current = words.get(i);
+			String next = words.get(i+1);
+			Node source = null, target = null;
+			for (Node v : graph.getVertices()) {
+				if (v.getValue().equals(current)) source = v;
+				else if (v.getValue().equals(next)) target = v;
+				if (source!= null & target != null) {
+					if (graph.findEdge(source, target) == null)
+						graph.addEdge(new Edge(1), source, target);
+					break;
 				}
 			}
 		}
@@ -113,8 +126,6 @@ public class TextRank {
 	private static void addWordsToGraph(List<Sentence> senteces) {
 		List<String> allowedPos = new ArrayList<String>();
 		allowedPos.add("JJ");
-		allowedPos.add("JJR");
-		allowedPos.add("JJS");
 		allowedPos.add("NN");
 		allowedPos.add("NNP");
 		allowedPos.add("NNPS");
@@ -144,9 +155,7 @@ public class TextRank {
 		
 		for (Sentence s : senteces) {
 			for (String w : s.lemmas()) {
-				if (!(w.equals(".")) && !(w.equals(",")) && !(w.equals("--"))) {
 					words.add(w);
-				}
 			}
 		}
 		
@@ -182,9 +191,8 @@ public class TextRank {
 	}
 
 	private static double calculateScore(Node n, Graph<Node, Edge> g, List<Node> visited) {
-		if (n.getScore() == 0) {
 			if (visited.contains(n)) {
-				return 0;
+				return n.getScore();
 			} else {
 				visited.add(n);
 				double sum = 0;
@@ -193,9 +201,6 @@ public class TextRank {
 				}
 				return (1 - d) + d * sum;
 			}
-		} else {
-			return n.getScore();
-		}
 	}
 
 }
