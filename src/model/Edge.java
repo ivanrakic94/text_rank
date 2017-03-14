@@ -1,18 +1,19 @@
+package model;
 
 public class Edge {
 	
-	private int distance;
+	private double distance;
 
 	public Edge(int distance) {
 		super();
 		this.distance = distance;
 	}
 
-	public int getDistance() {
+	public double getDistance() {
 		return distance;
 	}
 
-	public void setDistance(int distance) {
+	public void setDistance(double distance) {
 		this.distance = distance;
 	}
 	
