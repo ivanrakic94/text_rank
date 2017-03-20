@@ -1,6 +1,6 @@
 package model;
 
-public class Node {
+public class Node implements Comparable<Node> {
 	
 	private String value;
 	private double score;
@@ -51,6 +51,16 @@ public class Node {
 			return true;
 		}
 		return false;
+	}
+
+	public int compareTo(Node node) {
+		if (this.score < node.getScore()) {
+			return 1;
+		} else if (this.score > node.getScore()) {
+			return -1;
+		}
+		
+		return 0;
 	}
 
 }

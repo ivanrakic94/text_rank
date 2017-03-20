@@ -1,11 +1,14 @@
-package algorithm.unweighted;
+package algorithm;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import algorithm.unweighted.UnweightedTextRank;
+import algorithm.weighted.WeightedTextRank;
 import model.Edge;
 import model.Node;
 import edu.stanford.nlp.simple.Document;
@@ -15,36 +18,51 @@ import edu.uci.ics.jung.graph.UndirectedGraph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 
 
-public class TextRank {
+public abstract class TextRank {
 	
-	static UndirectedGraph<Node, Edge> graph = new UndirectedSparseGraph<Node, Edge>();
+	public static UndirectedGraph<Node, Edge> graph = new UndirectedSparseGraph<Node, Edge>();
 	public static final double d = 0.85;
-
+	
+	public abstract void connectVertices(List<String> words, int windowSize);
+	public abstract void calculateVerticesScore();
+	public abstract double calculateScore(Node n, Graph<Node, Edge> g, List<Node> visited);
+	
 	public static void main(String[] args) {
+		TextRank tr = new UnweightedTextRank();
+		System.out.println("Unweighted algorithm");
+		tr.extractKeywordsFromText("data/news.txt", 1);
 		
-			Document text = new Document(readText("data/news.txt"));
-			List<Sentence> senteces = text.sentences();
-			
-			List<String> words = returnWords(senteces);
-			addWordsToGraph(senteces);
-			
-			connectVertices(words);
-			
-			calculateVerticesScore();
-			
-			Node[] vertices = rankVertices();
-			
-			List<String> keywords = extractKeywords(vertices);
-			
-			List<String> mergedKeywords = mergeKeywords(keywords, words);
-			
-			removeMergedKeywords(keywords, mergedKeywords);
-			
-			displayKeywords(keywords, mergedKeywords);
-			
+		System.out.println();
+		
+		tr = new WeightedTextRank();
+		System.out.println("Weighted algorithm, window size: 5");
+		tr.extractKeywordsFromText("data/news.txt", 5);
+		
 	}
 	
-	private static void removeMergedKeywords(List<String> keywords, List<String> mergedKeywords) {
+	public void extractKeywordsFromText(String path, int windowSize) {
+		Document text = new Document(readText(path));
+		List<Sentence> senteces = text.sentences();
+		
+		List<String> words = returnWords(senteces);
+		addWordsToGraph(senteces);
+		
+		connectVertices(words, windowSize);
+		
+		calculateVerticesScore();
+		
+		Node[] vertices = rankVertices();
+		
+		List<String> keywords = extractKeywords(vertices);
+		
+		List<String> mergedKeywords = mergeKeywords(keywords, words);
+		
+		removeMergedKeywords(keywords, mergedKeywords);
+		
+		displayKeywords(keywords, mergedKeywords);
+	}
+	
+	private void removeMergedKeywords(List<String> keywords, List<String> mergedKeywords) {
 		for (String s : mergedKeywords) {
 			String[] words = s.split(" ");
 			keywords.remove(words[0]);
@@ -52,7 +70,7 @@ public class TextRank {
 		}
 	}
 
-	private static void displayKeywords(List<String> keywords, List<String> mergedKeywords) {
+	private void displayKeywords(List<String> keywords, List<String> mergedKeywords) {
 		System.out.println("Keywords for given text:");
 		for (String s : mergedKeywords) {
 			System.out.println(s);
@@ -63,7 +81,7 @@ public class TextRank {
 		
 	}
 
-	private static List<String> mergeKeywords(List<String> keywords, List<String> words) {
+	private List<String> mergeKeywords(List<String> keywords, List<String> words) {
 		List<String> mergedKeywords = new ArrayList<String>();
 		for (int i = 0; i < words.size() - 1; i++) {
 			if (keywords.contains(words.get(i)) && keywords.contains(words.get(i + 1)) && !mergedKeywords.contains(words.get(i) + " " + words.get(i + 1))) {
@@ -74,7 +92,7 @@ public class TextRank {
 		
 	}
 
-	private static List<String> extractKeywords(Node[] vertices) {
+	private List<String> extractKeywords(Node[] vertices) {
 		int numKeyWords = Math.min(15, graph.getVertexCount() / 3);
 		List<String> keywords = new ArrayList<String>();
 		for (int i = 0; i < numKeyWords; i++) {
@@ -84,49 +102,16 @@ public class TextRank {
 		return keywords;
 	}
 
-	private static Node[] rankVertices() {
+	private Node[] rankVertices() {
 		Node[] vertices = graph.getVertices().toArray(new Node[graph.getVertexCount()]);
 		
-		for (int i = 0; i < vertices.length; i++) {
-			for (int j = 0; j < vertices.length; j++) {
-				if (vertices[j].getScore() < vertices[i].getScore()) {
-					Node p = vertices[i];
-					vertices[i] = vertices[j];
-					vertices[j] = p;
-				}
-			}
-		}
+		Arrays.sort(vertices);
 		
 		return vertices;
 	}
 
-	private static void calculateVerticesScore() {
-		for (Node v : graph.getVertices()) {
-			List<Node> visited = new ArrayList<Node>();
-			v.setScore(calculateScore(v, graph, visited));
-		}
-		
-	}
 
-	private static void connectVertices(List<String> words) {
-		for (int i = 0; i < words.size()-1; i++) {
-			String current = words.get(i);
-			String next = words.get(i+1);
-			Node source = null, target = null;
-			for (Node v : graph.getVertices()) {
-				if (v.getValue().equals(current)) source = v;
-				else if (v.getValue().equals(next)) target = v;
-				if (source!= null & target != null) {
-					if (graph.findEdge(source, target) == null)
-						graph.addEdge(new Edge(1), source, target);
-					break;
-				}
-			}
-		}
-		
-	}
-
-	private static void addWordsToGraph(List<Sentence> senteces) {
+	private void addWordsToGraph(List<Sentence> senteces) {
 		List<String> allowedPos = new ArrayList<String>();
 		allowedPos.add("JJ");
 		allowedPos.add("NN");
@@ -153,7 +138,7 @@ public class TextRank {
 		
 	}
 
-	private static List<String> returnWords(List<Sentence> senteces) {
+	private List<String> returnWords(List<Sentence> senteces) {
 		List<String> words = new ArrayList<String>();
 		
 		for (Sentence s : senteces) {
@@ -165,7 +150,7 @@ public class TextRank {
 		return words;
 	}
 
-	private static String readText(String path) {
+	private String readText(String path) {
 		BufferedReader in;
 		String text = "";
 		try {
@@ -191,19 +176,6 @@ public class TextRank {
 			return null;
 		}
 		
-	}
-
-	private static double calculateScore(Node n, Graph<Node, Edge> g, List<Node> visited) {
-			if (visited.contains(n)) {
-				return n.getScore();
-			} else {
-				visited.add(n);
-				double sum = 0;
-				for (Node next : g.getPredecessors(n)) {
-					sum += calculateScore(next, g, visited) / g.getSuccessorCount(next);
-				}
-				return (1 - d) + d * sum;
-			}
 	}
 
 }
