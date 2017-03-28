@@ -4,7 +4,6 @@ public class Node implements Comparable<Node> {
 	
 	private String value;
 	private double score;
-	private boolean keyWord = false;
 
 	public Node() {
 	}
@@ -14,7 +13,6 @@ public class Node implements Comparable<Node> {
 	}
 	
 	public Node(String value, double score) {
-		super();
 		this.value = value;
 		this.score = score;
 	}
@@ -30,14 +28,6 @@ public class Node implements Comparable<Node> {
 	}
 	public void setScore(double score) {
 		this.score = score;
-	}
-	
-	public boolean isKeyWord() {
-		return keyWord;
-	}
-
-	public void setKeyWord(boolean keyWord) {
-		this.keyWord = keyWord;
 	}
 
 	@Override

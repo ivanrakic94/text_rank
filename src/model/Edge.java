@@ -5,7 +5,6 @@ public class Edge {
 	private double distance;
 
 	public Edge(int distance) {
-		super();
 		this.distance = distance;
 	}
 

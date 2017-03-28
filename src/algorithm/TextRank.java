@@ -7,47 +7,35 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import algorithm.unweighted.UnweightedTextRank;
-import algorithm.weighted.WeightedTextRank;
 import model.Edge;
 import model.Node;
 import edu.stanford.nlp.simple.Document;
 import edu.stanford.nlp.simple.Sentence;
-import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedGraph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 
 
 public abstract class TextRank {
 	
-	public static UndirectedGraph<Node, Edge> graph = new UndirectedSparseGraph<Node, Edge>();
+	public UndirectedGraph<Node, Edge> graph = new UndirectedSparseGraph<Node, Edge>();
 	public static final double d = 0.85;
 	
 	public abstract void connectVertices(List<String> words, int windowSize);
 	public abstract void calculateVerticesScore();
-	public abstract double calculateScore(Node n, Graph<Node, Edge> g, List<Node> visited);
-	
-	public static void main(String[] args) {
-		TextRank tr = new UnweightedTextRank();
-		System.out.println("Unweighted algorithm");
-		tr.extractKeywordsFromText("data/news.txt", 1);
-		
-		System.out.println();
-		
-		tr = new WeightedTextRank();
-		System.out.println("Weighted algorithm, window size: 5");
-		tr.extractKeywordsFromText("data/news.txt", 5);
-		
-	}
+	public abstract double calculateScore(Node n, List<Node> visited);
 	
 	public void extractKeywordsFromText(String path, int windowSize) {
 		Document text = new Document(readText(path));
 		List<Sentence> senteces = text.sentences();
 		
 		List<String> words = returnWords(senteces);
-		addWordsToGraph(senteces);
+		List<String> filteredWords = addWordsToGraph(senteces);
+		System.out.println(words);
+		System.out.println(graph.toString());
 		
-		connectVertices(words, windowSize);
+		connectVertices(filteredWords, windowSize);
+		System.out.println(graph.getVertexCount());
+		System.out.println(graph.getEdgeCount());
 		
 		calculateVerticesScore();
 		
@@ -55,7 +43,7 @@ public abstract class TextRank {
 		
 		List<String> keywords = extractKeywords(vertices);
 		
-		List<String> mergedKeywords = mergeKeywords(keywords, words);
+		List<String> mergedKeywords = mergeKeywords(keywords, filteredWords);
 		
 		removeMergedKeywords(keywords, mergedKeywords);
 		
@@ -111,7 +99,9 @@ public abstract class TextRank {
 	}
 
 
-	private void addWordsToGraph(List<Sentence> senteces) {
+	private List<String> addWordsToGraph(List<Sentence> senteces) {
+		List<String> filteredWords = new ArrayList<String>();
+		
 		List<String> allowedPos = new ArrayList<String>();
 		allowedPos.add("JJ");
 		allowedPos.add("NN");
@@ -131,11 +121,13 @@ public abstract class TextRank {
 					}
 					if (f) {
 						graph.addVertex(new Node(s.lemma(i)));
+						filteredWords.add(s.lemma(i));
 					}
 				}
 			}
 		}
 		
+		return filteredWords;
 	}
 
 	private List<String> returnWords(List<Sentence> senteces) {
