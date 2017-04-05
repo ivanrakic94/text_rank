@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import model.Edge;
@@ -18,6 +19,7 @@ import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 public abstract class TextRank {
 	
 	public UndirectedGraph<Node, Edge> graph = new UndirectedSparseGraph<Node, Edge>();
+	protected HashMap<String, Node> nodesMap = new HashMap<String, Node>();
 	public static final double d = 0.85;
 	
 	public abstract void connectVertices(List<String> words, int windowSize);
@@ -29,13 +31,9 @@ public abstract class TextRank {
 		List<Sentence> senteces = text.sentences();
 		
 		List<String> words = returnWords(senteces);
-		List<String> filteredWords = addWordsToGraph(senteces);
-		System.out.println(words);
-		System.out.println(graph.toString());
+		addWordsToGraph(senteces);
 		
-		connectVertices(filteredWords, windowSize);
-		System.out.println(graph.getVertexCount());
-		System.out.println(graph.getEdgeCount());
+		connectVertices(words, windowSize);
 		
 		calculateVerticesScore();
 		
@@ -43,7 +41,7 @@ public abstract class TextRank {
 		
 		List<String> keywords = extractKeywords(vertices);
 		
-		List<String> mergedKeywords = mergeKeywords(keywords, filteredWords);
+		List<String> mergedKeywords = mergeKeywords(keywords, words);
 		
 		removeMergedKeywords(keywords, mergedKeywords);
 		
@@ -55,6 +53,12 @@ public abstract class TextRank {
 			String[] words = s.split(" ");
 			keywords.remove(words[0]);
 			keywords.remove(words[1]);
+		}
+		
+		for (int i = 0; i < keywords.size(); i++) {
+			if (keywords.get(i).length() < 2) {
+				keywords.remove(i);
+			}
 		}
 	}
 
@@ -99,9 +103,7 @@ public abstract class TextRank {
 	}
 
 
-	private List<String> addWordsToGraph(List<Sentence> senteces) {
-		List<String> filteredWords = new ArrayList<String>();
-		
+	private void addWordsToGraph(List<Sentence> senteces) {
 		List<String> allowedPos = new ArrayList<String>();
 		allowedPos.add("JJ");
 		allowedPos.add("NN");
@@ -112,22 +114,20 @@ public abstract class TextRank {
 		for (Sentence s : senteces) {
 			List<String> posTags = s.posTags();
 			for (int i = 0; i < posTags.size(); i++) {
+				
+				String currentWord = s.lemma(i);
+				if (nodesMap.containsKey(currentWord))
+					continue;
+				
 				if (allowedPos.contains(posTags.get(i))) {
-					boolean f = true;
-					for (Node n : graph.getVertices()) {
-						if (s.lemma(i).equals(n.getValue())) {
-							f = false;
-						}
-					}
-					if (f) {
-						graph.addVertex(new Node(s.lemma(i)));
-						filteredWords.add(s.lemma(i));
-					}
+					
+					Node n = new Node(currentWord);
+					graph.addVertex(n);
+					nodesMap.put(currentWord, n);
+					
 				}
 			}
 		}
-		
-		return filteredWords;
 	}
 
 	private List<String> returnWords(List<Sentence> senteces) {

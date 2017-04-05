@@ -5,7 +5,6 @@ import java.util.List;
 import algorithm.TextRank;
 import model.Edge;
 import model.Node;
-import edu.uci.ics.jung.graph.Graph;
 
 
 public class UnweightedTextRank extends TextRank {
@@ -15,17 +14,16 @@ public class UnweightedTextRank extends TextRank {
 	@Override
 	public void connectVertices(List<String> words, int windowSize) {
 		for (int i = 0; i < words.size()-1; i++) {
-			String current = words.get(i);
-			String next = words.get(i+1);
-			Node source = null, target = null;
-			for (Node v : graph.getVertices()) {
-				if (v.getValue().equals(current)) source = v;
-				else if (v.getValue().equals(next)) target = v;
-				if (source!= null && target != null) {
-					if (graph.findEdge(source, target) == null)
-						graph.addEdge(new Edge(1), source, target);
-					break;
-				}
+			Node source = nodesMap.get(words.get(i));
+			if (source == null) continue;
+			
+			for (int j = i + 1; j <= Math.min(words.size() - 1, i + windowSize); j++) {
+				Node target = nodesMap.get(words.get(j));	
+				if (target == null) continue;
+				
+				if (graph.findEdge(source, target) == null) 
+					graph.addEdge(new Edge(1), source, target);
+			
 			}
 		}
 	}
@@ -46,8 +44,8 @@ public class UnweightedTextRank extends TextRank {
 		} else {
 			visited.add(n);
 			double sum = 0;
-			for (Node next : graph.getPredecessors(n)) {
-				sum += calculateScore(next, visited) / graph.getSuccessorCount(next);
+			for (Node previous : graph.getPredecessors(n)) {
+				sum += calculateScore(previous, visited) / graph.getSuccessorCount(previous);
 			}
 			return (1 - d) + d * sum;
 		}
