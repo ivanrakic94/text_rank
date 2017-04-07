@@ -34,51 +34,52 @@ verzije je korišćen neusmeren graf.
 
 Postupak se sastoji od sledećih koraka:
 
-1.  Prosleđeni tekst se deli na rečenice.
-
-2.  Dobijene rečenice se dele na pojedinačne reči.
-
-3.  Dobijene reči se svode na osnovni oblik, filtriraju i dodaju u graf
-    kao čvorovi. Nisu dozvoljeni duplikati reči u grafu i zadržavaju se
-    samo reči koje su imenice i pridevi, i to pridevi samo u
-    formi pozitiva.
+> 1. Prosleđeni tekst se deli na rečenice.
+>
+> 2. Dobijene rečenice se dele na pojedinačne reči.
+>
+> 3. Dobijene reči se svode na osnovni oblik, filtriraju i dodaju u graf
+> kao čvorovi. Nisu dozvoljeni duplikati reči u grafu i zadržavaju se
+> samo reči koje su imenice i pridevi, i to pridevi samo u formi
+> pozitiva.
 
 **Koraci specifični za netežinsku verziju algoritma**
 
-1.  Reči koje su u koraku 3. dodate u graf se povezuju granama sa rečima
-    koje se nalaze unutar zadatog „prozora“. U ovom koraku se se
-    posmatraju sve reči iz teksta, a ne samo imenice i prodevi, jer se
-    proverom potvrđuje da se na ovaj način dobijaju bolji rezultati.
-    Svaka grana u grafu ima težinu 1.
-
-2.  Za svaki čvor (reč) u grafu se računa težina, odnosno skor, na
-    osnovu povezanosti sa ostalim čvorovima u grafu, preko sledeće
-    formule:
+> 4. Reči koje su u koraku 3. dodate u graf se povezuju granama sa
+> rečima koje se nalaze unutar zadatog „prozora“. U ovom koraku se se
+> posmatraju sve reči iz teksta, a ne samo imenice i prodevi, jer se
+> proverom potvrđuje da se na ovaj način dobijaju bolji rezultati. Svaka
+> grana u grafu ima težinu 1.
+>
+> 5. Za svaki čvor (reč) u grafu se računa težina, odnosno skor, na
+> osnovu povezanosti sa ostalim čvorovima u grafu, preko sledeće
+> formule:
 
 <img src="./media/image1.PNG" width="549" height="118" />
 
-> , , gde je *S(V<sub>i</sub>)* težina čvora, *d* faktor koji
-> predstavlja verovatnoću prelaska sa trenutnog čvora na nasumično
-> izabrani čvor u grafu (uzeta je vrednost 0.85, kao što je predloženo u
-> radu (Mihalcea & Tarau, 2004)), *In(V<sub>i</sub>)* skup čvorova koji
-> prethode čvoru *V<sub>i\\ </sub>*, i *Out(V<sub>j</sub>)* skup čvorova
-> koji slede čvor *Vj* (što je u ovom slučaju, tj. u slučaju neusmerenog
-> grafa jednako, dakle *In(V<sub>i</sub>) = Out(V<sub>j</sub>)*)*.*
+> , gde je *S(V<sub>i</sub>)* težina čvora, *d* faktor koji predstavlja
+> verovatnoću prelaska sa trenutnog čvora na nasumično izabrani čvor u
+> grafu (uzeta je vrednost 0.85, kao što je predloženo u radu (Mihalcea
+> & Tarau, 2004)), *In(V<sub>i</sub>)* skup čvorova koji prethode čvoru
+> *V<sub>i\\ </sub>*, i *Out(V<sub>j</sub>)* skup čvorova koji slede
+> čvor *Vj* (što je u ovom slučaju, tj. u slučaju neusmerenog grafa
+> jednako, dakle *In(V<sub>i</sub>) = Out(V<sub>j</sub>)*)*.*
 
 **Koraci specifični za težinsku verziju algoritma**
 
-1.  Reči koje su dodate u graf u koraku 3. se povezuju granama sa rečima
-    čije je rastojanje od date reči manje od zadatog broja n. I u ovom
-    koraku se posmatraju sve reči iz teksta, a ne samo imenice i
-    pridevi, iz istog razloga kao u prethodnom slučaju. Proverava se da
-    li su reči koje bi trebalo povezati već povezane granom u okviru
-    grafa, i ukoliko jesu, povećava se težina te grane za 1. Ukoliko
-    reči nisu povezane, povezuju se novom granom i toj grani se
-    dodeljuje težina 1.
+> 4. Reči koje su dodate u graf u koraku 3. se povezuju granama sa
+> rečima čije je rastojanje od date reči manje od zadatog broja n. I u
+> ovom koraku se posmatraju sve reči iz teksta, a ne samo imenice i
+> pridevi, iz istog razloga kao u prethodnom slučaju. Proverava se da li
+> su reči koje bi trebalo povezati već povezane granom u okviru grafa, i
+> ukoliko jesu, povećava se težina te grane za 1. Ukoliko reči nisu
+> povezane, povezuju se novom granom i toj grani se dodeljuje težina 1.
+>
+> 5. Za svaki čvor (reč) u grafu se računa težina, odnosno skor, na
+> osnovu povezanosti sa ostalim čvorovima u grafu, preko sledeće
+> formule:
 
-2.  <img src="./media/image2.PNG" width="518" height="100" />Za svaki
-    čvor (reč) u grafu se računa težina, odnosno skor, na osnovu
-    povezanosti sa ostalim čvorovima u grafu, preko sledeće formule:
+<img src="./media/image2.PNG" width="518" height="100" />
 
 > , gde je *WS(V<sub>i</sub>)* težina čvora, *d, In(V<sub>i</sub>),
 > Out(V<sub>j</sub>)* kao u prethodoj formuli, a *w<sub>ij</sub>*
@@ -86,22 +87,22 @@ Postupak se sastoji od sledećih koraka:
 
 **Ostali koraci su isti za obe verzije**
 
-1.  Na osnovu dobijenih težina, čvorovi (reči) se rangiraju u
-    opadajućem redosledu.
-
-2.  Uzima se prvih n reči (n reči sa najvećom težinom), gde je n ili 15
-    reči ili trećina reči u tekstu, u zavisnosti koja vrednost od ove
-    dve je manja.
-
-3.  U ovom koraku se vrši spajanje dve ključne reči u ključni izraz. Dve
-    reči se spajaju u ključni izraz ako su obe izabrane kao ključne reči
-    i ako se u tekstu nalaze jedna pored druge.
-
-4.  U ovom koraku se reči koje ulaze u sastav ključnih izraza uklanjaju
-    iz liste pojedinačnih ključnih reči i izbacuju se reči od samo
-    jednog slova.
-
-5.  Vrši se ispisivanje ključnih izraza i ključnih reči.
+> 6. Na osnovu dobijenih težina, čvorovi (reči) se rangiraju u
+> opadajućem redosledu.
+>
+> 7. Uzima se prvih n reči (n reči sa najvećom težinom), gde je n ili 15
+> reči ili trećina reči u tekstu, u zavisnosti koja vrednost od ove dve
+> je manja.
+>
+> 8. U ovom koraku se vrši spajanje dve ključne reči u ključni izraz.
+> Dve reči se spajaju u ključni izraz ako su obe izabrane kao ključne
+> reči i ako se u tekstu nalaze jedna pored druge.
+>
+> 9. U ovom koraku se reči koje ulaze u sastav ključnih izraza uklanjaju
+> iz liste pojedinačnih ključnih reči i izbacuju se reči od samo jednog
+> slova.
+>
+> 10. Vrši se ispisivanje ključnih izraza i ključnih reči.
 
 TextRank algoritam
 ==================
@@ -292,3 +293,11 @@ algoritma, koji je bio malo uspešniji kod sažetih tekstova i blogova.
 Na kraju je potrebno još napomenuti da dobijeni rezultati mogu neznatno
 odstupati od ovde navedenih rezultata, usled nepredviđenog ponašanja
 JUNG biblioteke za rad sa grafovima.
+
+Reference
+=========
+
+1. Mihalcea, R. & Tarau, P. (2004) TextRank: Bringing Order into Texts.
+Proceedings of EMNLP 2004, p.404-411. Association for Computational
+Linguistics \[Online\]
+https://web.eecs.umich.edu/~mihalcea/papers/mihalcea.emnlp04.pdf.
